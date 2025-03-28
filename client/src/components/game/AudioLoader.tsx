@@ -18,14 +18,14 @@ const AudioLoader: React.FC = () => {
     // Create background music element
     const bgMusic = new Audio('/sounds/background.mp3');
     bgMusic.loop = true;
-    bgMusic.volume = 0.2;
+    bgMusic.volume = 0.12; // Lower background music volume
     
     // Create sound effect elements
     const hit = new Audio('/sounds/hit.mp3');
-    hit.volume = 0.3;
+    hit.volume = 0.2; // Lower volume
     
     const success = new Audio('/sounds/success.mp3');
-    success.volume = 0.2;
+    success.volume = 0.15; // Lower volume
     
     // Set up the audio elements in the store
     setBackgroundMusic(bgMusic);

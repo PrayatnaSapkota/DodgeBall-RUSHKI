@@ -49,7 +49,7 @@ export const useAudio = create<AudioState>((set, get) => ({
       
       // Clone the sound to allow overlapping playback
       const soundClone = hitSound.cloneNode() as HTMLAudioElement;
-      soundClone.volume = 0.3;
+      soundClone.volume = 0.2; // Lower volume (was 0.3)
       soundClone.play().catch(error => {
         console.log("Hit sound play prevented:", error);
       });
@@ -66,6 +66,7 @@ export const useAudio = create<AudioState>((set, get) => ({
       }
       
       successSound.currentTime = 0;
+      successSound.volume = 0.15; // Lower volume 
       successSound.play().catch(error => {
         console.log("Success sound play prevented:", error);
       });
