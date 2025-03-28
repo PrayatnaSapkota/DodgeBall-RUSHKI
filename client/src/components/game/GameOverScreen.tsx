@@ -11,7 +11,7 @@ const GameOverScreen: React.FC = () => {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80">
       <div className={cn(
-        "bg-card p-8 rounded-xl shadow-lg",
+        "bg-slate-800 p-8 rounded-xl shadow-lg",
         "flex flex-col items-center justify-center",
         "text-center max-w-md w-full mx-4",
         "border-2 border-red-600"
@@ -19,11 +19,11 @@ const GameOverScreen: React.FC = () => {
         <h1 className="text-4xl font-bold text-red-500 mb-4">GAME OVER</h1>
         
         <div className="w-full py-4 mb-4">
-          <p className="text-lg mb-2">Final Score:</p>
-          <p className="text-5xl font-bold text-primary">{score}</p>
+          <p className="text-lg text-white mb-2">Final Score:</p>
+          <p className="text-5xl font-bold text-yellow-400">{score}</p>
         </div>
         
-        <p className="text-muted-foreground mb-6">
+        <p className="text-gray-300 mb-6">
           {
             score < 50 ? "Keep practicing!" :
             score < 100 ? "Good job!" :
@@ -35,7 +35,7 @@ const GameOverScreen: React.FC = () => {
         <button
           onClick={restart}
           className={cn(
-            "bg-primary hover:bg-primary/90 text-primary-foreground",
+            "bg-red-600 hover:bg-red-700 text-white",
             "py-3 px-6 rounded-lg font-medium text-lg",
             "transition-colors duration-200 ease-in-out"
           )}

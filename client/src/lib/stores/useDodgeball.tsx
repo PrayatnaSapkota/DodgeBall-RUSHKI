@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 // Define obstacle interface
-interface Obstacle {
+export interface Obstacle {
   x: number;
   y: number;
   width: number;
@@ -46,7 +46,7 @@ export const useDodgeball = create<DodgeballState>((set) => ({
   obstacles: [],
   obstacleSpeed: 5,
   obstacleSpawnRate: 1500, // 1.5 seconds between new obstacles
-  setObstacles: (obstacles) => set({ obstacles }),
+  setObstacles: (obstacles: Obstacle[]) => set({ obstacles }),
   
   // Increase difficulty functions
   increaseObstacleSpeed: () => set((state) => ({ 

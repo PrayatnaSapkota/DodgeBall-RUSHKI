@@ -45,7 +45,7 @@ const Obstacle: React.FC<ObstacleProps> = ({ ctx, canvasWidth, canvasHeight }) =
         passed: false // Track if player has dodged this obstacle
       };
       
-      setObstacles(prev => [...prev, newObstacle]);
+      setObstacles([...obstacles, newObstacle]);
     };
     
     // Set up obstacle spawning interval
@@ -55,86 +55,115 @@ const Obstacle: React.FC<ObstacleProps> = ({ ctx, canvasWidth, canvasHeight }) =
     return () => clearInterval(spawnInterval);
   }, [setObstacles, canvasWidth, obstacleSpawnRate]);
   
-  // Update and draw obstacles
+  // Update and draw obstacles with animation frame
   useEffect(() => {
     if (!ctx) return;
     
-    // Update obstacle positions
-    const updatedObstacles = obstacles.map(obstacle => {
-      // Move obstacle down
-      const updatedY = obstacle.y + obstacleSpeed;
-      
-      // Calculate ball's y position (same as in Ball component)
-      const ballY = canvasHeight - ballRadius - 10;
-      
-      // Check for collisions with the ball
-      if (
-        !obstacle.passed &&
-        updatedY + obstacle.height >= ballY - ballRadius &&
-        updatedY <= ballY + ballRadius &&
-        obstacle.x <= ballPosition + ballRadius &&
-        obstacle.x + obstacle.width >= ballPosition - ballRadius
-      ) {
-        // Collision detected
-        playHit();
-        end(); // Game over
+    let animationFrameId: number;
+    let lastUpdateTime = 0;
+    const updateInterval = 1000 / 60; // 60 FPS
+
+    const updateObstacles = (timestamp: number) => {
+      // Control update rate
+      if (timestamp - lastUpdateTime < updateInterval) {
+        animationFrameId = requestAnimationFrame(updateObstacles);
+        return;
       }
       
-      // Check if the obstacle has been successfully dodged
-      if (
-        !obstacle.passed && 
-        updatedY > ballY + ballRadius
-      ) {
-        // Obstacle successfully dodged
-        playSuccess();
-        setScore(score + 10);
+      lastUpdateTime = timestamp;
+      
+      // Update obstacle positions
+      const updatedObstacles = obstacles.map(obstacle => {
+        // Move obstacle down
+        const updatedY = obstacle.y + obstacleSpeed;
         
-        // Every 5 obstacles dodged, increase difficulty
-        if (score > 0 && score % 50 === 0) {
-          increaseObstacleSpeed();
-          increaseSpawnRate();
+        // Calculate ball's y position (same as in Ball component)
+        const ballY = canvasHeight - ballRadius - 10;
+        
+        // Check for collisions with the ball
+        if (
+          !obstacle.passed &&
+          updatedY + obstacle.height >= ballY - ballRadius &&
+          updatedY <= ballY + ballRadius &&
+          obstacle.x <= ballPosition + ballRadius &&
+          obstacle.x + obstacle.width >= ballPosition - ballRadius
+        ) {
+          // Collision detected
+          playHit();
+          end(); // Game over
         }
         
-        return { ...obstacle, passed: true };
+        // Check if the obstacle has been successfully dodged
+        if (
+          !obstacle.passed && 
+          updatedY > ballY + ballRadius
+        ) {
+          // Obstacle successfully dodged
+          playSuccess();
+          
+          // Increase score
+          const newScore = score + 10;
+          setScore(newScore);
+          
+          // Check if we need to increase difficulty
+          // Note: Using current score, not state which could cause loops
+          if (newScore > 0 && newScore % 50 === 0) {
+            increaseObstacleSpeed();
+            increaseSpawnRate();
+          }
+          
+          return { ...obstacle, passed: true };
+        }
+        
+        return { ...obstacle, y: updatedY };
+      });
+      
+      // Remove obstacles that are off screen
+      const filteredObstacles = updatedObstacles.filter(
+        obstacle => obstacle.y < canvasHeight + 50
+      );
+      
+      // Update obstacles state
+      if (JSON.stringify(filteredObstacles) !== JSON.stringify(obstacles)) {
+        setObstacles(filteredObstacles);
       }
       
-      return { ...obstacle, y: updatedY };
-    });
-    
-    // Remove obstacles that are off screen
-    const filteredObstacles = updatedObstacles.filter(
-      obstacle => obstacle.y < canvasHeight + 50
-    );
-    
-    // Update obstacles state
-    setObstacles(filteredObstacles);
-    
-    // Draw all obstacles
-    filteredObstacles.forEach(obstacle => {
-      ctx.fillStyle = "#4D79FF"; // Blue sticks
-      ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+      // Draw all obstacles
+      filteredObstacles.forEach(obstacle => {
+        ctx.fillStyle = "#4D79FF"; // Blue sticks
+        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        
+        // Add a border
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+      });
       
-      // Add a border
-      ctx.strokeStyle = "#000000";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-    });
+      // Request next frame
+      animationFrameId = requestAnimationFrame(updateObstacles);
+    };
     
+    // Start animation loop
+    animationFrameId = requestAnimationFrame(updateObstacles);
+    
+    // Cleanup
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
   }, [
-    ctx, 
-    obstacles, 
-    setObstacles, 
-    obstacleSpeed, 
-    canvasHeight, 
-    ballPosition, 
+    ctx,
+    obstacleSpeed,
+    canvasHeight,
+    ballPosition,
     ballRadius,
     playHit,
-    playSuccess, 
+    playSuccess,
     end,
     score,
-    setScore,
-    increaseObstacleSpeed,
-    increaseSpawnRate
+    // Remove dependencies that might cause constant re-renders
+    // obstacles and setObstacles are removed as direct dependencies
   ]);
   
   return null; // Canvas component, no JSX to return
