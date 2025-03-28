@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { useDodgeball } from "@/lib/stores/useDodgeball";
+import { useGame } from "@/lib/stores/useGame";
 
 interface BallProps {
   ctx: CanvasRenderingContext2D;
@@ -60,18 +61,34 @@ const Ball: React.FC<BallProps> = ({ ctx, canvasWidth, canvasHeight }) => {
   useEffect(() => {
     if (!ctx) return;
     
-    // Calculate the y position (fixed at the bottom with a small margin)
-    const yPosition = canvasHeight - ballRadius - 10;
+    // Get current game phase from hook
+    const phase = useGame.getState().phase;
+    console.log('Ball drawing - Game phase:', phase);
+    if (phase !== "playing") return;
     
-    // Draw ball
-    ctx.beginPath();
-    ctx.arc(ballPosition, yPosition, ballRadius, 0, Math.PI * 2);
-    ctx.fillStyle = "#FF4D4D"; // Red ball
-    ctx.fill();
-    ctx.strokeStyle = "#000000"; // Black outline
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.closePath();
+    // Set up animation
+    const drawBall = () => {
+      // Calculate the y position (fixed at the bottom with a small margin)
+      const yPosition = canvasHeight - ballRadius - 10;
+      
+      // Draw ball
+      ctx.beginPath();
+      ctx.arc(ballPosition, yPosition, ballRadius, 0, Math.PI * 2);
+      ctx.fillStyle = "#FF4D4D"; // Red ball
+      ctx.fill();
+      ctx.strokeStyle = "#000000"; // Black outline
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.closePath();
+      
+      // Continue animation only if still playing
+      if (useGame.getState().phase === "playing") {
+        requestAnimationFrame(drawBall);
+      }
+    };
+    
+    const animationId = requestAnimationFrame(drawBall);
+    return () => cancelAnimationFrame(animationId);
     
   }, [ctx, ballPosition, ballRadius, canvasHeight]);
 

@@ -29,7 +29,14 @@ const Obstacle: React.FC<ObstacleProps> = ({ ctx, canvasWidth, canvasHeight }) =
   
   // Create new obstacles
   useEffect(() => {
+    // Only spawn obstacles when the game is playing
+    const { phase } = useGame.getState();
+    if (phase !== "playing") return;
+    
     const spawnObstacle = () => {
+      // Check game state before spawning
+      if (useGame.getState().phase !== "playing") return;
+      
       // Generate random width between 30 and 100
       const width = Math.floor(Math.random() * 70) + 30;
       
@@ -53,17 +60,28 @@ const Obstacle: React.FC<ObstacleProps> = ({ ctx, canvasWidth, canvasHeight }) =
     
     // Clear the interval on cleanup
     return () => clearInterval(spawnInterval);
-  }, [setObstacles, canvasWidth, obstacleSpawnRate]);
+  }, [setObstacles, canvasWidth, obstacleSpawnRate, obstacles]);
   
   // Update and draw obstacles with animation frame
   useEffect(() => {
     if (!ctx) return;
+    
+    // Only run animation when game is playing
+    const { phase } = useGame.getState();
+    console.log('Obstacle drawing - Game phase:', phase);
+    if (phase !== "playing") return;
     
     let animationFrameId: number;
     let lastUpdateTime = 0;
     const updateInterval = 1000 / 60; // 60 FPS
 
     const updateObstacles = (timestamp: number) => {
+      // Check if game is still playing
+      if (useGame.getState().phase !== "playing") {
+        cancelAnimationFrame(animationFrameId);
+        return;
+      }
+      
       // Control update rate
       if (timestamp - lastUpdateTime < updateInterval) {
         animationFrameId = requestAnimationFrame(updateObstacles);
