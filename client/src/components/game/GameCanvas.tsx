@@ -17,9 +17,13 @@ const GameCanvas: React.FC = () => {
   // Reset game when phase changes to "ready"
   useEffect(() => {
     if (phase === "ready") {
+      // Important: Clear all intervals and timers
       resetGame();
+      
+      // Reset shield state
+      setShieldActive(false);
     }
-  }, [phase, resetGame]);
+  }, [phase, resetGame, setShieldActive]);
   
   // Set up keyboard listeners for ball movement
   useEffect(() => {
@@ -215,6 +219,14 @@ const GameCanvas: React.FC = () => {
     // Handle game elements update and collision detection
     let lastUpdateTime = 0;
     const baseUpdateInterval = 1000 / 60; // 60 FPS
+    
+    // Clear all timers when phase changes to prevent bugs after restart
+    if (phase !== "playing") {
+      return;
+    }
+    
+    // Set up animation frame tracking
+    let animationFrameId = 0;
     
     // Animation loop
     const animate = (timestamp: number) => {
@@ -561,14 +573,20 @@ const GameCanvas: React.FC = () => {
         }
       }
       
-      // Request next frame
-      requestAnimationFrame(animate);
+      // Request next frame using the reference we defined
+      if (phase === "playing") {
+        animationFrameId = requestAnimationFrame(animate);
+      }
     };
     
-    const animationId = requestAnimationFrame(animate);
+    // Start the animation loop
+    animationFrameId = requestAnimationFrame(animate);
     
-    // Cleanup
-    return () => cancelAnimationFrame(animationId);
+    // Cleanup function - important to prevent bugs on restart
+    return () => {
+      console.log('Cleaning up game animation frame');
+      cancelAnimationFrame(animationFrameId);
+    };
   }, [ctx, canvasWidth, canvasHeight, phase, setShieldActive]);
   
   return (

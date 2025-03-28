@@ -158,10 +158,30 @@ export const useDodgeball = create<DodgeballState>((set, get) => ({
   difficultyLevel: "medium", // Default difficulty
   setDifficultyLevel: (level) => set({ difficultyLevel: level }),
   
-  // Reset game function
+  // Reset game function - fixes game reset bug
   resetGame: () => {
     const difficulty = get().difficultyLevel;
     const settings = DIFFICULTY_LEVELS[difficulty];
+    
+    // Save high score to local storage before resetting
+    const currentScore = get().score;
+    if (currentScore > 0) {
+      try {
+        const savedHighScore = localStorage.getItem('dodgeball_high_score') || '0';
+        const highScore = Math.max(parseInt(savedHighScore), currentScore);
+        localStorage.setItem('dodgeball_high_score', highScore.toString());
+        
+        // Save last 5 scores in an array
+        const savedScores = JSON.parse(localStorage.getItem('dodgeball_scores') || '[]');
+        savedScores.unshift(currentScore); // Add new score at the beginning
+        if (savedScores.length > 5) {
+          savedScores.pop(); // Remove oldest score if we have more than 5
+        }
+        localStorage.setItem('dodgeball_scores', JSON.stringify(savedScores));
+      } catch (e) {
+        console.error("Could not save score to localStorage:", e);
+      }
+    }
     
     set({
       ballPosition: DEFAULT_BALL_POSITION,
