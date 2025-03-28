@@ -28,3 +28,9 @@ export default defineConfig({
   // Add support for large models and audio files
   assetsInclude: ["**/*.gltf", "**/*.glb", "**/*.mp3", "**/*.ogg", "**/*.wav"],
 });
+// Add this to vite.config.ts
+export default defineConfig({
+  // ... other config
+  base: '/dodgeball-game/', // Add this line - use your repo name
+  // ... rest of config
+})
