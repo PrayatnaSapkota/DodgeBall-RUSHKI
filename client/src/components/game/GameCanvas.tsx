@@ -97,6 +97,11 @@ const GameCanvas: React.FC = () => {
       // Create multiple obstacles based on obstacleCount
       const newObstacles: Obstacle[] = [];
       
+      // Standardize how many obstacles can fit horizontally
+      // Divide the canvas into equal sections for better distribution
+      const maxPossibleObstacles = 4; // Allow max 4 normal obstacles side by side
+      const sectionWidth = canvasWidth / maxPossibleObstacles;
+      
       for (let i = 0; i < currentObstacleCount; i++) {
         // Determine obstacle type (10% chance for special obstacles after 300 points)
         const score = useDodgeball.getState().score;
@@ -106,25 +111,31 @@ const GameCanvas: React.FC = () => {
           obstacleType = Math.random() < 0.5 ? "wide" : "moving";
         }
         
-        // Set obstacle properties based on type
-        let width = Math.floor(Math.random() * 70) + 30; // Standard width
+        // Set obstacle properties based on type - sizes are now relative to section width
+        let width: number;
         if (obstacleType === "wide") {
-          width = Math.floor(Math.random() * 100) + 100; // Wider obstacle
+          // Wide obstacles take up 1.5 to 2 sections
+          width = Math.floor(Math.random() * (sectionWidth * 0.5)) + sectionWidth * 1.5;
+        } else {
+          // Normal and moving obstacles take 40-80% of a section
+          width = Math.floor(Math.random() * (sectionWidth * 0.4)) + (sectionWidth * 0.4);
         }
         
-        // Ensure obstacles don't overlap too much
+        // Ensure obstacles don't overlap by using available sections
         let x: number = 0;
         let attempts = 0;
-        const maxAttempts = 10;
+        const maxAttempts = 15;
         
+        // Try to find a good position
         do {
+          // Pick a random position that fits the obstacle
           x = Math.floor(Math.random() * (canvasWidth - width));
           attempts++;
         } while (
           attempts < maxAttempts && 
           newObstacles.some(obs => 
-            Math.abs(obs.x - x) < width / 2 || 
-            Math.abs((obs.x + obs.width) - (x + width)) < width / 2
+            // Check for overlap with existing obstacles
+            (x < obs.x + obs.width && x + width > obs.x)
           )
         );
         
@@ -430,6 +441,15 @@ const GameCanvas: React.FC = () => {
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvasWidth, canvasHeight);
       
+      // Add attribution text (always visible)
+      ctx.fillStyle = "#ffffff";
+      ctx.globalAlpha = 0.3; // Semi-transparent
+      ctx.font = "12px Arial";
+      ctx.textAlign = "right";
+      ctx.fillText("GAME BY Prayatna", canvasWidth - 10, canvasHeight - 25);
+      ctx.fillText("Developed By Replit AI", canvasWidth - 10, canvasHeight - 10);
+      ctx.globalAlpha = 1.0; // Reset transparency
+      
       // If game is in playing phase, draw game elements
       if (phase === "playing") {
         // Get latest state for drawing
@@ -589,14 +609,20 @@ const GameCanvas: React.FC = () => {
     };
   }, [ctx, canvasWidth, canvasHeight, phase, setShieldActive]);
   
+  // Fixed size canvas for all screen sizes
   return (
-    <div className="w-full h-full flex items-center justify-center">
-      <canvas
-        ref={canvasRef}
-        width={800} 
-        height={600}
-        className="max-w-full max-h-full border-2 border-gray-800 rounded-lg shadow-lg"
-      />
+    <div className="w-full h-full flex items-center justify-center overflow-hidden">
+      <div className="relative w-full max-w-[800px]">
+        {/* Maintain aspect ratio */}
+        <div className="aspect-[4/3] w-full">
+          <canvas
+            ref={canvasRef}
+            width={800} 
+            height={600}
+            className="absolute inset-0 w-full h-full border-2 border-gray-800 rounded-lg shadow-lg"
+          />
+        </div>
+      </div>
     </div>
   );
 };
